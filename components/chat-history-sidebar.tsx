@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,10 +40,12 @@ export function ChatHistorySidebar({
 	const router = useRouter();
 	const deleteChatsMutation = useDeleteChats();
 	const isDeleting = deleteChatsMutation.isPending;
+	const searchParams = useSearchParams();
 
 	useEffect(() => {
 		setIsMounted(true);
-	}, []);
+		onRefresh();
+	}, [searchParams]);
 
 	const toggleSelection = (projectId: string, e: React.MouseEvent) => {
 		e.stopPropagation();

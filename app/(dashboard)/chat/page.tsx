@@ -17,16 +17,13 @@ export default function ChatPage() {
 	const searchParams = useSearchParams();
 	const [chatId, setChatId] = useState<string>("new");
 	const [input, setInput] = useState("");
-	const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
+	const [chatMessages, setChatMessages] = useState<Message[]>([]);
 
-	// Fetch chat data
 	const { data: chatData, isLoading: isLoadingChat } = useChat(chatId);
 	const sendMessageMutation = useSendMessage();
 
 	const messages =
-		optimisticMessages.length > 0
-			? optimisticMessages
-			: chatData?.messages || [];
+		chatMessages.length > 0 ? chatMessages : chatData?.messages || [];
 
 	const isLoading = sendMessageMutation.isPending || isLoadingChat;
 
@@ -34,8 +31,8 @@ export default function ChatPage() {
 		const currentChatId = searchParams.get("chat_id") || "new";
 		const currentPromptText = searchParams.get("prompt");
 		setChatId(currentChatId);
-		setInput(currentPromptText || "");
-		setOptimisticMessages([]);
+		setInput(input + (currentPromptText || ""));
+		setChatMessages([]);
 	}, [searchParams]);
 
 	const handleSendMessage = async () => {
@@ -54,7 +51,7 @@ export default function ChatPage() {
 			content: "",
 		};
 
-		setOptimisticMessages([...messages, userMessage, thinkingMessage]);
+		setChatMessages([...messages, userMessage, thinkingMessage]);
 		setInput("");
 
 		try {
@@ -63,13 +60,13 @@ export default function ChatPage() {
 				prompt: promptText,
 			});
 
-			setOptimisticMessages([]);
+			setChatMessages([]);
 
 			if (data.chat_id && (chatId === "new" || data.chat_id !== chatId)) {
 				router.replace(`/chat?chat_id=${data.chat_id}`);
 			}
 		} catch (error) {
-			setOptimisticMessages([]);
+			setChatMessages([]);
 		}
 	};
 
@@ -80,17 +77,16 @@ export default function ChatPage() {
 		}
 	};
 
-	// Handle error state from mutation
 	useEffect(() => {
-		if (sendMessageMutation.isError && optimisticMessages.length > 0) {
-			setOptimisticMessages([]);
+		if (sendMessageMutation.isError && chatMessages.length > 0) {
+			setChatMessages([]);
 		}
-	}, [sendMessageMutation.isError, optimisticMessages.length]);
+	}, [sendMessageMutation.isError, chatMessages.length]);
 
 	const characterCount = input.length;
 	const maxCharacters = 3000;
 
-	if (loading) {
+	if (loading && chatId !== "new") {
 		return (
 			<div className="flex flex-1 overflow-hidden py-4 border-t border-l rounded-tl-3xl">
 				<div className="flex flex-col flex-1 min-h-0 overflow-hidden">
