@@ -174,12 +174,12 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 					isCollapsed ? "space-y-2" : isMobile ? "space-y-2" : "space-y-3"
 				}>
 				{/* Theme Toggle */}
-				{!isCollapsed && (
-					<div
-						className={`flex items-center gap-2 ${isMobile ? "px-1" : "px-2"}`}>
-						<ModeToggle className="w-full" />
-					</div>
-				)}
+				<div
+					className={`flex items-center ${
+						state === "collapsed" ? "" : "gap-2"
+					}`}>
+					<ModeToggle className="w-full" />
+				</div>
 				{!isCollapsed && <SidebarSeparator />}
 				{/* User Profile */}
 				<div

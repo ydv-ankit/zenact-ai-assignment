@@ -1,114 +1,160 @@
 "use client";
 
-import { MessageSquare, Search } from "lucide-react";
+import { useState } from "react";
+import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 
-interface ChatHistoryItem {
+interface ProjectItem {
 	id: string;
 	title: string;
-	preview: string;
-	timestamp: string;
+	description: string;
 }
 
-// Mock chat history data - replace with real data later
-const mockChatHistory: ChatHistoryItem[] = [
+// Mock project data - replace with real data later
+const mockProjects: ProjectItem[] = [
 	{
 		id: "1",
-		title: "New Chat",
-		preview: "How do I create a React component?",
-		timestamp: "2 hours ago",
+		title: "New Project",
+		description: "...",
 	},
 	{
 		id: "2",
-		title: "Project Setup",
-		preview: "Can you help me set up a Next.js project?",
-		timestamp: "1 day ago",
+		title: "Learning From 100 Years o...",
+		description: "For athletes, high altitude prod...",
 	},
 	{
 		id: "3",
-		title: "API Integration",
-		preview: "How to integrate REST API in React?",
-		timestamp: "2 days ago",
+		title: "Research officiants",
+		description: "Maxwell's equations—the foun...",
 	},
 	{
 		id: "4",
-		title: "Styling Questions",
-		preview: "Best practices for CSS in React applications",
-		timestamp: "3 days ago",
+		title: "What does a senior lead de...",
+		description: "Physiological respiration involv...",
 	},
 	{
 		id: "5",
-		title: "Database Design",
-		preview: "What's the best database for a chat app?",
-		timestamp: "1 week ago",
+		title: "Write a sweet note to your...",
+		description: "In the eighteenth century the G...",
+	},
+	{
+		id: "6",
+		title: "Meet with cake bakers",
+		description: "Physical space is often conceiv...",
+	},
+	{
+		id: "7",
+		title: "Meet with cake bakers",
+		description: "Physical space is often conceiv...",
 	},
 ];
 
 interface ChatHistorySidebarProps {
-	selectedChatId?: string;
-	onChatSelect?: (chatId: string) => void;
+	selectedProjectId?: string;
+	onProjectSelect?: (projectId: string) => void;
 }
 
 export function ChatHistorySidebar({
-	selectedChatId,
-	onChatSelect,
+	selectedProjectId,
+	onProjectSelect,
 }: ChatHistorySidebarProps) {
+	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
+	const toggleSelection = (projectId: string, e: React.MouseEvent) => {
+		e.stopPropagation();
+		setSelectedItems((prev) => {
+			const newSet = new Set(prev);
+			if (newSet.has(projectId)) {
+				newSet.delete(projectId);
+			} else {
+				newSet.add(projectId);
+			}
+			return newSet;
+		});
+	};
+
+	const handleDeleteSelected = () => {
+		// TODO: Implement delete functionality
+		console.log("Deleting items:", Array.from(selectedItems));
+		setSelectedItems(new Set());
+	};
+
 	return (
-		<div className="w-3/12 border-l border-t text-sidebar-foreground flex flex-col h-full overflow-hidden">
+		<div className="w-3/12 border-l border-t text-sidebar-foreground flex flex-col h-full overflow-hidden bg-background">
 			{/* Header */}
-			<div className="p-3 space-y-3 border-b">
-				{/* Header with title */}
+			<div className="p-3">
 				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-semibold">Chat History</h2>
+					<h2 className="text-lg font-semibold">
+						Projects{" "}
+						<span className="text-muted-foreground font-normal">
+							({mockProjects.length})
+						</span>
+					</h2>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" size="icon" className="h-8 w-8">
+								<MoreVertical className="h-4 w-4" />
+								<span className="sr-only">More options</span>
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem>New Project</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={handleDeleteSelected}
+								disabled={selectedItems.size === 0}>
+								Delete selected items
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				</div>
 			</div>
 
+			<Separator />
+
 			{/* Content */}
-			<div className="flex-1 overflow-auto p-2">
+			<div className="flex-1 overflow-auto p-3">
 				<div className="space-y-2">
-					{/* Recent Chats Label */}
-					<div className="px-2">
-						<p className="text-xs text-muted-foreground font-medium">
-							Recent Chats
-						</p>
-					</div>
-
-					{/* Chat History List */}
-					<div className="space-y-1">
-						{mockChatHistory.map((chat) => (
-							<Button
-								key={chat.id}
-								variant={selectedChatId === chat.id ? "secondary" : "ghost"}
-								className="w-full justify-start h-auto p-3 text-left"
-								onClick={() => onChatSelect?.(chat.id)}>
-								<div className="flex flex-col items-start gap-1 w-full min-w-0">
-									<div className="flex items-center justify-between w-full">
-										<span className="font-medium text-sm truncate flex-1">
-											{chat.title}
-										</span>
-										<span className="text-xs text-muted-foreground ml-2 shrink-0">
-											{chat.timestamp}
-										</span>
+					{mockProjects.map((project) => {
+						const isSelected = selectedItems.has(project.id);
+						return (
+							<div
+								key={project.id}
+								onClick={() => onProjectSelect?.(project.id)}
+								className={`relative rounded-lg border bg-muted/50 p-3 cursor-pointer transition-colors hover:bg-muted ${
+									selectedProjectId === project.id
+										? "border-primary bg-muted"
+										: "border-border"
+								}`}>
+								<div className="flex items-start justify-between gap-3">
+									<div className="flex-1 min-w-0">
+										<h3 className="font-semibold text-sm text-foreground truncate mb-1">
+											{project.title}
+										</h3>
+										<p className="text-xs text-muted-foreground truncate">
+											{project.description}
+										</p>
 									</div>
-									<p className="text-xs text-muted-foreground truncate w-full">
-										{chat.preview}
-									</p>
+									<button
+										type="button"
+										onClick={(e) => toggleSelection(project.id, e)}
+										className={`h-4 w-4 rounded-full border-2 shrink-0 mt-0.5 transition-colors ${
+											isSelected
+												? "border-blue-800 bg-blue-800"
+												: "border-muted-foreground/30 bg-transparent"
+										}`}
+										aria-label={`Select ${project.title}`}
+									/>
 								</div>
-							</Button>
-						))}
-					</div>
-
-					{/* New Chat Button */}
-					<div className="pt-2">
-						<Button
-							variant="outline"
-							className="w-full gap-2"
-							onClick={() => onChatSelect?.("new")}>
-							<MessageSquare className="h-4 w-4" />
-							New Chat
-						</Button>
-					</div>
+							</div>
+						);
+					})}
 				</div>
 			</div>
 		</div>

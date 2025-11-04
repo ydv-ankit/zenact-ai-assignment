@@ -14,7 +14,7 @@ export function ChatHeader({ title }: ChatHeaderProps) {
 				<Button
 					variant="default"
 					size="sm"
-					className="bg-black text-white hover:bg-black/90 rounded-lg gap-1.5 cursor-pointer">
+					className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black rounded-lg gap-1.5 cursor-pointer">
 					<Zap className="h-4 w-4 text-yellow-400 fill-yellow-400" />
 					Upgrade
 				</Button>
