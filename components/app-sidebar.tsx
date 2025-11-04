@@ -107,7 +107,7 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 	};
 
 	return (
-		<Sidebar collapsible="icon" variant="inset">
+		<Sidebar collapsible="icon" variant="sidebar">
 			<SidebarHeader
 				className={`${isCollapsed ? "p-2" : isMobile ? "p-2" : "p-3"} ${
 					isCollapsed ? "space-y-1" : isMobile ? "space-y-2" : "space-y-3"
@@ -213,14 +213,10 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 						{!isCollapsed && (
 							<div className="flex flex-col min-w-0 ml-2 text-left gap-1.5">
 								<Skeleton
-									className={`${
-										isMobile ? "h-3 w-20" : "h-3.5 w-24"
-									}`}
+									className={`${isMobile ? "h-3 w-20" : "h-3.5 w-24"}`}
 								/>
 								<Skeleton
-									className={`${
-										isMobile ? "h-2.5 w-32" : "h-3 w-36"
-									}`}
+									className={`${isMobile ? "h-2.5 w-32" : "h-3 w-36"}`}
 								/>
 							</div>
 						)}

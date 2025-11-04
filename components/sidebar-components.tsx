@@ -36,7 +36,7 @@ export function SidebarProjectsComponent({
 	const fetchChats = useCallback(async () => {
 		try {
 			setIsLoading(true);
-			const response = await fetch("/api/chats");
+			const response = await fetch("/api/history");
 			const data = await response.json();
 
 			if (response.ok && data.chats) {
@@ -89,7 +89,7 @@ export function SidebarProjectsComponent({
 			const chatIds = Array.from(selectedItems);
 			const currentChatId = pathname?.split("/chat/")[1];
 
-			const response = await fetch("/api/chats", {
+			const response = await fetch("/api/history", {
 				method: "DELETE",
 				headers: {
 					"Content-Type": "application/json",

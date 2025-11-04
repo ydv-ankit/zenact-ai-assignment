@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,54 +23,26 @@ interface ProjectItem {
 interface ChatHistorySidebarProps {
 	selectedProjectId?: string;
 	onProjectSelect?: (projectId: string) => void;
+	projects: ProjectItem[];
+	isLoading: boolean;
+	onRefresh: () => void;
 }
 
 export function ChatHistorySidebar({
 	selectedProjectId,
 	onProjectSelect,
+	projects,
+	isLoading,
+	onRefresh,
 }: ChatHistorySidebarProps) {
 	const [isMounted, setIsMounted] = useState(false);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-	const [projects, setProjects] = useState<ProjectItem[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const router = useRouter();
-	const pathname = usePathname();
-
-	const fetchChats = useCallback(async () => {
-		try {
-			setIsLoading(true);
-			const response = await fetch("/api/chats");
-			const data = await response.json();
-
-			if (response.ok && data.chats) {
-				setProjects(data.chats);
-			} else if (data.error) {
-				toast.error("Failed to load chat history");
-				setProjects([]);
-			}
-		} catch (error) {
-			console.error("Error fetching chats:", error);
-			toast.error("Failed to load chat history. Please try again.");
-			setProjects([]);
-		} finally {
-			setIsLoading(false);
-		}
-	}, []);
 
 	useEffect(() => {
 		setIsMounted(true);
-		fetchChats();
-	}, [fetchChats]);
-
-	useEffect(() => {
-		if (isMounted && pathname?.startsWith("/chat/")) {
-			const timeoutId = setTimeout(() => {
-				fetchChats();
-			}, 500);
-			return () => clearTimeout(timeoutId);
-		}
-	}, [pathname, isMounted, fetchChats]);
+	}, []);
 
 	const toggleSelection = (projectId: string, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -114,7 +86,7 @@ export function ChatHistorySidebar({
 					);
 				}
 				setSelectedItems(new Set());
-				await fetchChats();
+				onRefresh();
 				if (wasSelectedChatDeleted) {
 					router.push("/chat/new");
 				}
@@ -163,9 +135,7 @@ export function ChatHistorySidebar({
 								<DropdownMenuItem onClick={handleNewProject}>
 									New Project
 								</DropdownMenuItem>
-								<DropdownMenuItem onClick={fetchChats}>
-									Refresh
-								</DropdownMenuItem>
+								<DropdownMenuItem onClick={onRefresh}>Refresh</DropdownMenuItem>
 								<DropdownMenuItem
 									onClick={handleDeleteSelected}
 									disabled={selectedItems.size === 0 || isDeleting}>

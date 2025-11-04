@@ -34,7 +34,7 @@ export async function generateChatResponse(
 	const promptTemplate = ChatPromptTemplate.fromMessages([
 		[
 			"system",
-			"You are a helpful assistant. Answer the user's questions and assist with their tasks. Be concise and to the point.",
+			"You are a helpful assistant. Answer the user's questions and assist with their tasks. Be concise and to the point. Use simple text and avoid markdown. Use the most appropriate emoji for the response. Ask for follow up questions or necessary clarifications.",
 		],
 		new MessagesPlaceholder("history"),
 		["human", "{input}"],
