@@ -2,6 +2,10 @@
 
 A chat app powered by Google's Gemini AI. Built with Next.js, it handles user authentication, saves your chat history. Plus, it has dark mode because who doesn't love that?
 
+## Dummy credentials to use app
+- Email: `ankit@mail.com`
+- Password: `12121212`
+
 ## What It Does
 
 - 🤖 **Chat with AI**
