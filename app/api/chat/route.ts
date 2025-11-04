@@ -27,15 +27,8 @@ export async function GET(request: NextRequest) {
 		.single();
 
 	if (error) {
-		console.log(error);
-
-		if (error.code === "PGRST116") {
-			// Chat not found
-			return NextResponse.json({ chat_id, messages: [] });
-		}
 		return NextResponse.json({ error: error.message }, { status: 500 });
 	}
-
 	return NextResponse.json({
 		chat_id: chat.chat_id,
 		messages: chat.messages || [],
@@ -60,6 +53,9 @@ export async function POST(request: NextRequest) {
 		.eq("chat_id", chat_id)
 		.eq("user_id", user.id)
 		.single();
+
+	console.log(existingChat);
+	console.log(fetchError);
 
 	if (fetchError && fetchError.code !== "PGRST116") {
 		return NextResponse.json({ error: fetchError.message }, { status: 500 });

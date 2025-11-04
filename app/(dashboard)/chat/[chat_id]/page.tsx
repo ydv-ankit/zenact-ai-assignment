@@ -116,7 +116,6 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 				if (chat_id === "new" && data.chat_id) {
 					router.replace(`/chat/${data.chat_id}`);
-					toast.success("Chat created successfully");
 				}
 			} else {
 				setMessages((prev) => prev.slice(0, -2));
@@ -126,7 +125,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 			}
 		} catch (error) {
 			setMessages((prev) => prev.slice(0, -2));
-			toast.error("Network error. Please check your connection and try again.");
+			toast.error("Error sending message! Please try again.");
 			console.error("Error sending message:", error);
 		} finally {
 			setIsLoading(false);

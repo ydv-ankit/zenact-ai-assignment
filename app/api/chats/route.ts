@@ -22,8 +22,13 @@ export async function GET(request: NextRequest) {
 		return NextResponse.json({ error: error.message }, { status: 500 });
 	}
 
+	const validChats = (chats || []).filter(
+		(chat) =>
+			chat.messages && Array.isArray(chat.messages) && chat.messages.length > 0
+	);
+
 	// Transform chats to include title and description
-	const transformedChats = (chats || []).map((chat) => {
+	const transformedChats = validChats.map((chat) => {
 		const messages = chat.messages || [];
 		const firstUserMessage = messages.find(
 			(msg: { role: string }) => msg.role === "user"
@@ -62,38 +67,86 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-	const { searchParams } = new URL(request.url);
-	const chat_ids = searchParams.get("chat_ids");
+	try {
+		const body = await request.json();
+		const { chatIds } = body;
 
-	if (!chat_ids) {
+		if (!chatIds || !Array.isArray(chatIds) || chatIds.length === 0) {
+			return NextResponse.json(
+				{ error: "chatIds array is required" },
+				{ status: 400 }
+			);
+		}
+
+		const supabase = await createSupabaseServerClient();
+		const {
+			data: { user },
+		} = await supabase.auth.getUser();
+
+		if (!user) {
+			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+		}
+
+		const chatIdsArray = chatIds
+			.map((id: string) => id.trim())
+			.filter((id: string) => id.length > 0);
+
+		if (chatIdsArray.length === 0) {
+			return NextResponse.json(
+				{ error: "No valid chat IDs provided" },
+				{ status: 400 }
+			);
+		}
+
+		// First, verify these chats exist and belong to the user
+		const { data: existingChats, error: fetchError } = await supabase
+			.from("chats")
+			.select("chat_id")
+			.eq("user_id", user.id)
+			.in("chat_id", chatIdsArray);
+
+		if (fetchError) {
+			console.error("Error fetching chats to delete:", fetchError);
+			return NextResponse.json({ error: fetchError.message }, { status: 500 });
+		}
+
+		if (!existingChats || existingChats.length === 0) {
+			return NextResponse.json(
+				{ error: "No chats found to delete", deletedCount: 0 },
+				{ status: 404 }
+			);
+		}
+
+		// Now delete the chats
+		const { data: deletedChats, error: deleteError } = await supabase
+			.from("chats")
+			.delete()
+			.eq("user_id", user.id)
+			.in("chat_id", chatIdsArray)
+			.select("chat_id");
+
+		if (deleteError) {
+			console.error("Error deleting chats:", deleteError);
+			return NextResponse.json({ error: deleteError.message }, { status: 500 });
+		}
+
+		const deletedCount = deletedChats?.length || 0;
+
+		return NextResponse.json({
+			success: true,
+			deletedCount,
+			deletedChatIds: deletedChats?.map((chat) => chat.chat_id) || [],
+		});
+	} catch (error) {
+		console.error("Error in DELETE handler:", error);
 		return NextResponse.json(
-			{ error: "chat_ids parameter is required" },
+			{
+				error:
+					error instanceof Error
+						? error.message
+						: "Failed to parse request body",
+			},
 			{ status: 400 }
 		);
 	}
-
-	const supabase = await createSupabaseServerClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-	}
-
-	// Parse chat_ids (can be comma-separated)
-	const chatIdsArray = chat_ids.split(",").map((id) => id.trim());
-
-	const { error } = await supabase
-		.from("chats")
-		.delete()
-		.eq("user_id", user.id)
-		.in("chat_id", chatIdsArray);
-
-	if (error) {
-		console.error("Error deleting chats:", error);
-		return NextResponse.json({ error: error.message }, { status: 500 });
-	}
-
-	return NextResponse.json({ success: true });
 }

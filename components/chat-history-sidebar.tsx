@@ -63,10 +63,8 @@ export function ChatHistorySidebar({
 		fetchChats();
 	}, [fetchChats]);
 
-	// Refresh chat list when pathname changes (user navigates to different chat)
 	useEffect(() => {
 		if (isMounted && pathname?.startsWith("/chat/")) {
-			// Debounce the refresh to avoid too many requests
 			const timeoutId = setTimeout(() => {
 				fetchChats();
 			}, 500);
@@ -95,25 +93,35 @@ export function ChatHistorySidebar({
 			const chatIds = Array.from(selectedItems);
 			const wasSelectedChatDeleted =
 				selectedProjectId && chatIds.includes(selectedProjectId);
-			const chatIdsParam = chatIds.join(",");
 
-			const response = await fetch(`/api/chats?chat_ids=${chatIdsParam}`, {
+			const response = await fetch("/api/chats", {
 				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ chatIds }),
 			});
 
 			const data = await response.json();
 
 			if (response.ok && data.success) {
-				toast.success(`Deleted ${selectedItems.size} chat(s)`);
+				const deletedCount = data.deletedCount || selectedItems.size;
+				if (deletedCount > 0) {
+					toast.success(`Deleted ${deletedCount} chat(s)`);
+				} else {
+					toast.error(
+						"No chats were deleted. They may have already been deleted."
+					);
+				}
 				setSelectedItems(new Set());
-				// Refresh the list
 				await fetchChats();
-				// If the deleted chat was selected, navigate to new chat
 				if (wasSelectedChatDeleted) {
 					router.push("/chat/new");
 				}
 			} else {
-				toast.error(data.error || "Failed to delete chats");
+				const errorMsg = data.error || "Failed to delete chats";
+				toast.error(errorMsg);
+				console.error("Delete error:", data);
 			}
 		} catch (error) {
 			console.error("Error deleting chats:", error);
