@@ -2,7 +2,7 @@ import { Code, FileText, Plus, Sparkles, User } from "lucide-react";
 
 export function Welcome() {
 	return (
-		<div className="flex flex-col items-center justify-center w-full">
+		<div className="flex flex-col items-center justify-center w-full h-full">
 			{/* Welcome Section */}
 			<div className="mb-8 w-full flex items-center justify-center flex-col">
 				<h2 className="text-3xl font-bold mb-2">Welcome to Script</h2>

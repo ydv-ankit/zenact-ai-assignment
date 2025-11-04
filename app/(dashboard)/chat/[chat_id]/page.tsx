@@ -256,7 +256,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 								</div>
 
 								{/* Action Buttons */}
-								<div className="flex gap-2 mb-2">
+								<div className="flex gap-2 mb-2 mx-2">
 									<Button
 										variant="ghost"
 										size="sm"
