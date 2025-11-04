@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, use, useEffect, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/hooks/use-user";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +32,8 @@ export default function ChatPage({ params }: ChatPageProps) {
 	const pathname = usePathname();
 	const currentChatId = pathname?.split("/chat/")[1];
 	const previousChatId = previousPathnameRef.current?.split("/chat/")[1];
+	const searchParams = useSearchParams();
+	const promptText = searchParams.get("prompt");
 
 	const { chat_id } = use(
 		params instanceof Promise ? params : Promise.resolve(params)
@@ -56,6 +58,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 	useEffect(() => {
 		fetchChatHistory();
+		setInput(promptText || "");
 	}, [chat_id]);
 
 	const handleSendMessage = async () => {

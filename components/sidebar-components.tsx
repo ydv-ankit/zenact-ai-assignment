@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
 
 interface ProjectItem {
@@ -242,12 +243,76 @@ export function SidebarProjectsComponent({
 }
 
 export function SidebarTemplatesComponent() {
+	const [prompts, setPrompts] = useState<string[]>([
+		"Write a professional email to a client explaining a project delay, outlining reasons, new timeline, and next steps clearly",
+		"Create a detailed meeting agenda for a weekly team sync including objectives, discussion topics, time allocations, and action items",
+		"Draft a comprehensive project proposal describing goals, scope, deliverables, timeline, budget, and expected impact for stakeholder approval",
+		"Write a constructive code review comment suggesting improvements to variable naming, error handling, and overall readability without discouraging the developer",
+		"Summarize the key points from a 10-page research report about renewable energy trends, highlighting major findings, data, and recommendations",
+	]);
+	const [newPrompt, setNewPrompt] = useState("");
+	const router = useRouter();
+
+	const handleAddPrompt = () => {
+		if (newPrompt.trim()) {
+			setPrompts([...prompts, newPrompt.trim()]);
+			setNewPrompt("");
+			toast.success("Prompt added successfully");
+		}
+	};
+
+	const handlePromptClick = (prompt: string) => {
+		router.push(`/chat/new?prompt=${encodeURIComponent(prompt)}`);
+	};
+
+	const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === "Enter") {
+			handleAddPrompt();
+		}
+	};
+
 	return (
-		<div className="flex flex-col items-center justify-center h-full p-8">
-			<h1 className="text-3xl font-bold mb-4">Templates</h1>
-			<p className="text-muted-foreground text-center max-w-md">
-				Templates Component - This is where your templates will be displayed.
-			</p>
+		<div className="flex flex-col h-full overflow-hidden">
+			{/* Header */}
+			<div className="p-6 pb-4">
+				<h1 className="text-3xl font-bold">
+					Templates{" "}
+					<span className="text-muted-foreground font-normal text-lg">
+						({prompts.length})
+					</span>
+				</h1>
+			</div>
+
+			<Separator />
+
+			{/* Content */}
+			<div className="flex-1 overflow-auto p-6 pt-4">
+				<div className="space-y-2 mb-4">
+					{prompts.map((prompt, index) => (
+						<div
+							key={index}
+							onClick={() => handlePromptClick(prompt)}
+							className="rounded-lg border bg-muted/50 p-3 hover:bg-muted transition-colors">
+							<p className="text-sm text-foreground">{prompt}</p>
+						</div>
+					))}
+				</div>
+
+				{/* Add Prompt Input */}
+				<div className="flex gap-2 mt-4">
+					<Input
+						type="text"
+						placeholder="Enter a new prompt..."
+						value={newPrompt}
+						onChange={(e) => setNewPrompt(e.target.value)}
+						onKeyDown={handleKeyPress}
+						className="flex-1"
+					/>
+					<Button onClick={handleAddPrompt} disabled={!newPrompt.trim()}>
+						Add
+					</Button>
+				</div>
+			</div>
 		</div>
 	);
 }

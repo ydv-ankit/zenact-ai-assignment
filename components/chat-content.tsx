@@ -1,22 +1,13 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-	Sparkles,
-	User,
-	Paperclip,
-	Mic,
-	MessageSquare,
-	Send,
-} from "lucide-react";
+import { Sparkles, User } from "lucide-react";
 import { Welcome } from "@/components/welcome";
 import Image from "next/image";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useSidebar } from "./ui/sidebar";
+import { ChatInput } from "@/components/chat-input";
 
 interface Message {
 	role: "user" | "assistant";
@@ -51,7 +42,6 @@ export function ChatContent({
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 	const isMobile = useIsMobile();
-	const { state } = useSidebar();
 
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -141,70 +131,16 @@ export function ChatContent({
 				</div>
 
 				{/* Sticky Input Section at bottom */}
-				<div className="shrink-0 pt-4 bg-background">
-					<div className="max-w-4xl w-11/12 mx-auto border rounded-2xl focus-within:border-blue-500 focus-within:ring-0 transition-colors">
-						<div className="relative mb-3 border-b">
-							<Input
-								ref={inputRef}
-								value={input}
-								onChange={(e) => setInput(e.target.value)}
-								onKeyDown={handleKeyPress}
-								placeholder="Ask me anything..."
-								disabled={isLoading}
-								maxLength={maxCharacters}
-								className="w-[97%] pr-24 h-auto min-h-[50px] py-4 text-base border-none ring-0 outline-none outline-0 shadow-none focus-visible:border-none focus:border-none focus-visible:ring-0 focus:ring-0"
-							/>
-							<div className="absolute right-3 bottom-3 flex items-center gap-2">
-								<span
-									className={`text-xs ${
-										characterCount > maxCharacters * 0.9
-											? "text-destructive"
-											: "text-muted-foreground"
-									}`}>
-									{characterCount}/{maxCharacters}
-								</span>
-								<Button
-									onClick={handleSendMessage}
-									disabled={!input.trim() || isLoading}
-									size="icon-sm"
-									className="h-8 w-8 cursor-pointer"
-									variant="ghost">
-									<Send className="h-4 w-4" />
-								</Button>
-							</div>
-						</div>
-
-						{/* Action Buttons */}
-						<div className="flex gap-2 mb-2 mx-2">
-							<Button
-								variant="ghost"
-								size="sm"
-								className="gap-2 cursor-pointer">
-								<Paperclip className="h-4 w-4" />
-								{!isMobile && "Attach"}
-							</Button>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="gap-2 cursor-pointer">
-								<Mic className="h-4 w-4" />
-								{!isMobile && "Voice Message"}
-							</Button>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="gap-2 cursor-pointer">
-								<MessageSquare className="h-4 w-4" />
-								{!isMobile && "Browse Prompts"}
-							</Button>
-						</div>
-					</div>
-					{/* Disclaimer */}
-					<p className="hidden md:block text-xs text-muted-foreground text-center mt-2">
-						Script may generate inaccurate information about people, places, or
-						facts. Model: Script AI v1.3
-					</p>
-				</div>
+				<ChatInput
+					ref={inputRef}
+					input={input}
+					setInput={setInput}
+					isLoading={isLoading}
+					handleSendMessage={handleSendMessage}
+					handleKeyPress={handleKeyPress}
+					characterCount={characterCount}
+					maxCharacters={maxCharacters}
+				/>
 			</div>
 		</div>
 	);

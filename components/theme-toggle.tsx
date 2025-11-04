@@ -21,6 +21,7 @@ export function ModeToggle({ className }: { className?: string }) {
 
 	useEffect(() => {
 		setMounted(true);
+		setTheme("light");
 	}, []);
 
 	if (!mounted) {
