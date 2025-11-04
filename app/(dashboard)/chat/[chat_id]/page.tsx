@@ -18,6 +18,7 @@ import { Welcome } from "@/components/welcome";
 import { useUser } from "@/hooks/use-user";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Message {
 	role: "user" | "assistant";
@@ -38,7 +39,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 	const [selectedProjectId, setSelectedProjectId] = useState<
 		string | undefined
 	>();
-	const { user } = useUser();
+	const { user, loading } = useUser();
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -142,6 +143,65 @@ export default function ChatPage({ params }: ChatPageProps) {
 
 	const characterCount = input.length;
 	const maxCharacters = 3000;
+
+	if (loading) {
+		return (
+			<div className="flex flex-col h-full overflow-hidden">
+				<ChatHeader title="AI Chat" />
+				<div className="flex flex-1 min-h-0">
+					<div className="flex flex-1 overflow-hidden py-4 border-t border-l rounded-tl-3xl">
+						<div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+							<div className="flex-1 overflow-y-auto px-4 py-4 min-h-0 max-h-[calc(100vh-250px)]">
+								<div className="max-w-4xl w-11/12 mx-auto space-y-4 py-4">
+									{/* Loading skeleton for welcome/chat area */}
+									<div className="flex flex-col items-center justify-center w-full h-full space-y-6">
+										<Skeleton className="h-12 w-64" />
+										<Skeleton className="h-4 w-96" />
+										<div className="grid grid-cols-2 gap-4 mt-8 w-full max-w-2xl">
+											<Skeleton className="h-32 w-full" />
+											<Skeleton className="h-32 w-full" />
+											<Skeleton className="h-32 w-full" />
+											<Skeleton className="h-32 w-full" />
+										</div>
+									</div>
+								</div>
+							</div>
+							{/* Loading skeleton for input area */}
+							<div className="shrink-0 pt-4 bg-background">
+								<div className="max-w-4xl w-11/12 mx-auto border rounded-2xl">
+									<Skeleton className="h-[50px] w-full mb-3" />
+									<div className="flex gap-2 mb-2 mx-2">
+										<Skeleton className="h-8 w-20" />
+										<Skeleton className="h-8 w-28" />
+										<Skeleton className="h-8 w-32" />
+									</div>
+								</div>
+								{/* Disclaimer skeleton */}
+								<Skeleton className="h-4 w-96 mx-auto mt-2" />
+							</div>
+						</div>
+					</div>
+					{/* Loading skeleton for chat history sidebar */}
+					<div className="w-3/12 border-l border-t text-sidebar-foreground flex flex-col h-full overflow-hidden bg-background">
+						<div className="p-3">
+							<Skeleton className="h-6 w-32" />
+						</div>
+						<div className="h-px bg-border" />
+						<div className="flex-1 overflow-auto p-3">
+							<div className="space-y-2">
+								{[1, 2, 3, 4].map((i) => (
+									<div key={i} className="rounded-lg border bg-muted/50 p-3">
+										<Skeleton className="h-4 w-3/4 mb-2" />
+										<Skeleton className="h-3 w-full" />
+									</div>
+								))}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="flex flex-col h-full overflow-hidden">

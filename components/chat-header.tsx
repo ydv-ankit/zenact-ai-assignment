@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createSupabaseClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ChatHeaderProps {
 	title: string;
@@ -19,7 +20,7 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ title }: ChatHeaderProps) {
 	const [isMounted, setIsMounted] = useState(false);
-	const { user } = useUser();
+	const { user, loading } = useUser();
 	const supabase = createSupabaseClient();
 	const router = useRouter();
 
@@ -62,7 +63,9 @@ export function ChatHeader({ title }: ChatHeaderProps) {
 				</Button>
 
 				{/* User avatar with dropdown */}
-				{isMounted ? (
+				{loading ? (
+					<Skeleton className="w-8 h-8 rounded-full" />
+				) : isMounted ? (
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<button className="ring-1 rounded-full cursor-pointer hover:opacity-80 transition-opacity">

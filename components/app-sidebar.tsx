@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createSupabaseClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const mainNavigationItems: SidebarMenuItemConfig[] = [
 	{
@@ -96,7 +97,7 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 	const isMobile = useIsMobile();
 	const isCollapsed = state === "collapsed";
 
-	const { user } = useUser();
+	const { user, loading } = useUser();
 	const supabase = createSupabaseClient();
 	const router = useRouter();
 
@@ -199,56 +200,83 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 				</div>
 				{!isCollapsed && <SidebarSeparator />}
 				{/* User Profile */}
-				{user && (
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<button
-								className={`flex items-center w-full ${
-									isCollapsed
-										? "gap-2 px-0"
-										: isMobile
-										? "gap-2 px-1"
-										: "gap-3 px-2"
-								} justify-center hover:opacity-80 transition-opacity cursor-pointer hover:bg-muted hover:rounded-md py-2`}>
-								<div
-									className={`flex items-center justify-center rounded-full bg-muted ring-1`}>
-									{user?.user_metadata?.avatar_url ? (
-										<Image
-											src={user?.user_metadata?.avatar_url}
-											alt="User"
-											width={25}
-											height={25}
-											className="w-8 h-8 object-contain dark:invert rounded-full"
-										/>
-									) : (
-										<User className="h-4 w-4 text-muted-foreground" />
-									)}
-								</div>
-								{!isCollapsed && (
-									<div className="flex flex-col min-w-0 ml-2 text-left">
-										<span
-											className={`${
-												isMobile ? "text-xs" : "text-sm"
-											} font-medium truncate`}>
-											{user?.user_metadata?.name || "User"}
-										</span>
-										<span
-											className={`${
-												isMobile ? "text-[10px]" : "text-xs"
-											} text-muted-foreground truncate`}>
-											{user?.email || "user@example.com"}
-										</span>
+				{loading ? (
+					<div
+						className={`flex items-center w-full ${
+							isCollapsed
+								? "gap-2 px-0"
+								: isMobile
+								? "gap-2 px-1"
+								: "gap-3 px-2"
+						} justify-center py-2`}>
+						<Skeleton className="w-8 h-8 rounded-full" />
+						{!isCollapsed && (
+							<div className="flex flex-col min-w-0 ml-2 text-left gap-1.5">
+								<Skeleton
+									className={`${
+										isMobile ? "h-3 w-20" : "h-3.5 w-24"
+									}`}
+								/>
+								<Skeleton
+									className={`${
+										isMobile ? "h-2.5 w-32" : "h-3 w-36"
+									}`}
+								/>
+							</div>
+						)}
+					</div>
+				) : (
+					user && (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<button
+									className={`flex items-center w-full ${
+										isCollapsed
+											? "gap-2 px-0"
+											: isMobile
+											? "gap-2 px-1"
+											: "gap-3 px-2"
+									} justify-center hover:opacity-80 transition-opacity cursor-pointer hover:bg-muted hover:rounded-md py-2`}>
+									<div
+										className={`flex items-center justify-center rounded-full bg-muted ring-1`}>
+										{user?.user_metadata?.avatar_url ? (
+											<Image
+												src={user?.user_metadata?.avatar_url}
+												alt="User"
+												width={25}
+												height={25}
+												className="w-8 h-8 object-contain dark:invert rounded-full"
+											/>
+										) : (
+											<User className="h-4 w-4 text-muted-foreground" />
+										)}
 									</div>
-								)}
-							</button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align={isCollapsed ? "center" : "end"}>
-							<DropdownMenuItem onClick={handleLogout} variant="destructive">
-								<LogOut className="h-4 w-4" />
-								Logout
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+									{!isCollapsed && (
+										<div className="flex flex-col min-w-0 ml-2 text-left">
+											<span
+												className={`${
+													isMobile ? "text-xs" : "text-sm"
+												} font-medium truncate`}>
+												{user?.user_metadata?.name || "User"}
+											</span>
+											<span
+												className={`${
+													isMobile ? "text-[10px]" : "text-xs"
+												} text-muted-foreground truncate`}>
+												{user?.email || "user@example.com"}
+											</span>
+										</div>
+									)}
+								</button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align={isCollapsed ? "center" : "end"}>
+								<DropdownMenuItem onClick={handleLogout} variant="destructive">
+									<LogOut className="h-4 w-4" />
+									Logout
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					)
 				)}
 			</SidebarFooter>
 		</Sidebar>
