@@ -30,6 +30,9 @@ export default function Auth() {
 	const [error, setError] = useState<string | null>(null);
 	console.log("user", user);
 
+	// OAuth callback is handled automatically by Supabase SSR middleware
+	// The code parameter will be exchanged for a session server-side
+
 	useEffect(() => {
 		if (user) {
 			router.push("/");
@@ -128,7 +131,7 @@ export default function Auth() {
 		const { error } = await supabase.auth.signInWithOAuth({
 			provider: "google",
 			options: {
-				redirectTo: `${window.location.origin}/`,
+				redirectTo: `${window.location.origin}/auth`,
 			},
 		});
 
