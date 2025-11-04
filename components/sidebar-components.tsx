@@ -325,7 +325,7 @@ export function SidebarDocumentsComponent() {
 		<div className="flex flex-col items-center justify-center h-full p-8">
 			<h1 className="text-3xl font-bold mb-4">Documents</h1>
 			<p className="text-muted-foreground text-center max-w-md">
-				Documents Component - This is where your documents will be displayed.
+				Documents Component - This is where documents will be displayed.
 			</p>
 		</div>
 	);
@@ -336,8 +336,7 @@ export function SidebarCommunityComponent() {
 		<div className="flex flex-col items-center justify-center h-full p-8">
 			<h1 className="text-3xl font-bold mb-4">Community</h1>
 			<p className="text-muted-foreground text-center max-w-md">
-				Community Component - This is where your community content will be
-				displayed.
+				Community Component - This is where community content will be displayed.
 			</p>
 		</div>
 	);
@@ -352,7 +351,7 @@ export function SidebarSettingsComponent() {
 		<div className="flex flex-col items-center justify-center h-full p-8">
 			<h1 className="text-3xl font-bold mb-4">Settings</h1>
 			<p className="text-muted-foreground text-center max-w-md">
-				Settings Component - This is where your settings will be displayed.
+				Settings Component - This is where settings will be displayed.
 			</p>
 		</div>
 	);

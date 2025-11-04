@@ -68,6 +68,18 @@ export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
 			setTranscribedText(transcript || "");
 		}, [transcript]);
 
+		const handleSendMessageClick = () => {
+			setAttachments([]);
+			handleSendMessage();
+		};
+
+		const handleKeyPressDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === "Enter" && !e.shiftKey) {
+				setAttachments([]);
+			}
+			handleKeyPress(e);
+		};
+
 		const handleAttachClick = () => {
 			fileInputRef.current?.click();
 		};
@@ -204,7 +216,7 @@ export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
 								ref={ref}
 								value={input}
 								onChange={(e) => setInput(e.target.value)}
-								onKeyDown={handleKeyPress}
+								onKeyDown={handleKeyPressDown}
 								placeholder="Ask me anything..."
 								disabled={isLoading}
 								maxLength={maxCharacters}
@@ -220,7 +232,7 @@ export const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(
 									{characterCount}/{maxCharacters}
 								</span>
 								<Button
-									onClick={handleSendMessage}
+									onClick={handleSendMessageClick}
 									disabled={!input.trim() || isLoading}
 									size="icon-sm"
 									className="h-8 w-8 cursor-pointer"
