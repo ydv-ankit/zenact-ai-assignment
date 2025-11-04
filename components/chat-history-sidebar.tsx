@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,51 +11,14 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import toast from "react-hot-toast";
 
 interface ProjectItem {
 	id: string;
 	title: string;
 	description: string;
 }
-
-// Mock project data - replace with real data later
-const mockProjects: ProjectItem[] = [
-	{
-		id: "1",
-		title: "New Project",
-		description: "...",
-	},
-	{
-		id: "2",
-		title: "Learning From 100 Years o...",
-		description: "For athletes, high altitude prod...",
-	},
-	{
-		id: "3",
-		title: "Research officiants",
-		description: "Maxwell's equations—the foun...",
-	},
-	{
-		id: "4",
-		title: "What does a senior lead de...",
-		description: "Physiological respiration involv...",
-	},
-	{
-		id: "5",
-		title: "Write a sweet note to your...",
-		description: "In the eighteenth century the G...",
-	},
-	{
-		id: "6",
-		title: "Meet with cake bakers",
-		description: "Physical space is often conceiv...",
-	},
-	{
-		id: "7",
-		title: "Meet with cake bakers",
-		description: "Physical space is often conceiv...",
-	},
-];
 
 interface ChatHistorySidebarProps {
 	selectedProjectId?: string;
@@ -65,7 +29,50 @@ export function ChatHistorySidebar({
 	selectedProjectId,
 	onProjectSelect,
 }: ChatHistorySidebarProps) {
+	const [isMounted, setIsMounted] = useState(false);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+	const [projects, setProjects] = useState<ProjectItem[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [isDeleting, setIsDeleting] = useState(false);
+	const router = useRouter();
+	const pathname = usePathname();
+
+	const fetchChats = useCallback(async () => {
+		try {
+			setIsLoading(true);
+			const response = await fetch("/api/chats");
+			const data = await response.json();
+
+			if (response.ok && data.chats) {
+				setProjects(data.chats);
+			} else if (data.error) {
+				toast.error("Failed to load chat history");
+				setProjects([]);
+			}
+		} catch (error) {
+			console.error("Error fetching chats:", error);
+			toast.error("Failed to load chat history. Please try again.");
+			setProjects([]);
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		setIsMounted(true);
+		fetchChats();
+	}, [fetchChats]);
+
+	// Refresh chat list when pathname changes (user navigates to different chat)
+	useEffect(() => {
+		if (isMounted && pathname?.startsWith("/chat/")) {
+			// Debounce the refresh to avoid too many requests
+			const timeoutId = setTimeout(() => {
+				fetchChats();
+			}, 500);
+			return () => clearTimeout(timeoutId);
+		}
+	}, [pathname, isMounted, fetchChats]);
 
 	const toggleSelection = (projectId: string, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -80,10 +87,49 @@ export function ChatHistorySidebar({
 		});
 	};
 
-	const handleDeleteSelected = () => {
-		// TODO: Implement delete functionality
-		console.log("Deleting items:", Array.from(selectedItems));
-		setSelectedItems(new Set());
+	const handleDeleteSelected = async () => {
+		if (selectedItems.size === 0) return;
+
+		try {
+			setIsDeleting(true);
+			const chatIds = Array.from(selectedItems);
+			const wasSelectedChatDeleted =
+				selectedProjectId && chatIds.includes(selectedProjectId);
+			const chatIdsParam = chatIds.join(",");
+
+			const response = await fetch(`/api/chats?chat_ids=${chatIdsParam}`, {
+				method: "DELETE",
+			});
+
+			const data = await response.json();
+
+			if (response.ok && data.success) {
+				toast.success(`Deleted ${selectedItems.size} chat(s)`);
+				setSelectedItems(new Set());
+				// Refresh the list
+				await fetchChats();
+				// If the deleted chat was selected, navigate to new chat
+				if (wasSelectedChatDeleted) {
+					router.push("/chat/new");
+				}
+			} else {
+				toast.error(data.error || "Failed to delete chats");
+			}
+		} catch (error) {
+			console.error("Error deleting chats:", error);
+			toast.error("Failed to delete chats. Please try again.");
+		} finally {
+			setIsDeleting(false);
+		}
+	};
+
+	const handleNewProject = () => {
+		router.push("/chat/new");
+	};
+
+	const handleProjectClick = (projectId: string) => {
+		onProjectSelect?.(projectId);
+		router.push(`/chat/${projectId}`);
 	};
 
 	return (
@@ -94,25 +140,39 @@ export function ChatHistorySidebar({
 					<h2 className="text-lg font-semibold">
 						Projects{" "}
 						<span className="text-muted-foreground font-normal">
-							({mockProjects.length})
+							({isLoading ? "..." : projects.length})
 						</span>
 					</h2>
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" size="icon" className="h-8 w-8">
-								<MoreVertical className="h-4 w-4" />
-								<span className="sr-only">More options</span>
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuItem>New Project</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={handleDeleteSelected}
-								disabled={selectedItems.size === 0}>
-								Delete selected items
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+					{isMounted ? (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="ghost" size="icon" className="h-8 w-8">
+									<MoreVertical className="h-4 w-4" />
+									<span className="sr-only">More options</span>
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<DropdownMenuItem onClick={handleNewProject}>
+									New Project
+								</DropdownMenuItem>
+								<DropdownMenuItem onClick={fetchChats}>
+									Refresh
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={handleDeleteSelected}
+									disabled={selectedItems.size === 0 || isDeleting}>
+									{isDeleting
+										? "Deleting..."
+										: `Delete selected (${selectedItems.size})`}
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					) : (
+						<Button variant="ghost" size="icon" className="h-8 w-8">
+							<MoreVertical className="h-4 w-4" />
+							<span className="sr-only">More options</span>
+						</Button>
+					)}
 				</div>
 			</div>
 
@@ -120,42 +180,60 @@ export function ChatHistorySidebar({
 
 			{/* Content */}
 			<div className="flex-1 overflow-auto p-3">
-				<div className="space-y-2">
-					{mockProjects.map((project) => {
-						const isSelected = selectedItems.has(project.id);
-						return (
-							<div
-								key={project.id}
-								onClick={() => onProjectSelect?.(project.id)}
-								className={`relative rounded-lg border bg-muted/50 p-3 cursor-pointer transition-colors hover:bg-muted ${
-									selectedProjectId === project.id
-										? "border-primary bg-muted"
-										: "border-border"
-								}`}>
-								<div className="flex items-start justify-between gap-3">
-									<div className="flex-1 min-w-0">
-										<h3 className="font-semibold text-sm text-foreground truncate mb-1">
-											{project.title}
-										</h3>
-										<p className="text-xs text-muted-foreground truncate">
-											{project.description}
-										</p>
-									</div>
-									<button
-										type="button"
-										onClick={(e) => toggleSelection(project.id, e)}
-										className={`h-4 w-4 rounded-full border-2 shrink-0 mt-0.5 transition-colors ${
-											isSelected
-												? "border-blue-800 bg-blue-800"
-												: "border-muted-foreground/30 bg-transparent"
-										}`}
-										aria-label={`Select ${project.title}`}
-									/>
-								</div>
+				{isLoading ? (
+					<div className="space-y-2">
+						{[1, 2, 3, 4].map((i) => (
+							<div key={i} className="rounded-lg border bg-muted/50 p-3">
+								<Skeleton className="h-4 w-3/4 mb-2" />
+								<Skeleton className="h-3 w-full" />
 							</div>
-						);
-					})}
-				</div>
+						))}
+					</div>
+				) : projects.length === 0 ? (
+					<div className="flex flex-col items-center justify-center h-full text-center p-4">
+						<p className="text-sm text-muted-foreground mb-4">No chats yet</p>
+						<Button variant="outline" size="sm" onClick={handleNewProject}>
+							Start New Chat
+						</Button>
+					</div>
+				) : (
+					<div className="space-y-2">
+						{projects.map((project) => {
+							const isSelected = selectedItems.has(project.id);
+							return (
+								<div
+									key={project.id}
+									onClick={() => handleProjectClick(project.id)}
+									className={`relative rounded-lg border bg-muted/50 p-3 cursor-pointer transition-colors hover:bg-muted ${
+										selectedProjectId === project.id
+											? "border-primary bg-muted"
+											: "border-border"
+									}`}>
+									<div className="flex items-start justify-between gap-3">
+										<div className="flex-1 min-w-0">
+											<h3 className="font-semibold text-sm text-foreground truncate mb-1">
+												{project.title}
+											</h3>
+											<p className="text-xs text-muted-foreground truncate">
+												{project.description}
+											</p>
+										</div>
+										<button
+											type="button"
+											onClick={(e) => toggleSelection(project.id, e)}
+											className={`h-4 w-4 rounded-full border-2 shrink-0 mt-0.5 transition-colors ${
+												isSelected
+													? "border-blue-800 bg-blue-800"
+													: "border-muted-foreground/30 bg-transparent"
+											}`}
+											aria-label={`Select ${project.title}`}
+										/>
+									</div>
+								</div>
+							);
+						})}
+					</div>
+				)}
 			</div>
 		</div>
 	);

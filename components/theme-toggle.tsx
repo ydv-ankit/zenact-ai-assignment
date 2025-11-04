@@ -16,7 +16,6 @@ import { Button } from "./ui/button";
 export function ModeToggle({ className }: { className?: string }) {
 	const { theme, setTheme } = useTheme();
 	const { state } = useSidebar();
-	console.log("state", state);
 
 	const [mounted, setMounted] = useState(false);
 

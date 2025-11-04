@@ -14,8 +14,6 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import {
-	MessageSquare,
-	FolderKanban,
 	LayoutTemplate,
 	FileText,
 	Users,
@@ -24,9 +22,9 @@ import {
 	HelpCircle,
 	Search,
 	Plus,
-	User,
 	FolderOpen,
 	MessageSquarePlus,
+	User,
 } from "lucide-react";
 import { ModeToggle } from "@/components/theme-toggle";
 import {
@@ -35,6 +33,7 @@ import {
 } from "@/components/sidebar-menu-items";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Image from "next/image";
+import { useUser } from "@/hooks/use-user";
 
 const mainNavigationItems: SidebarMenuItemConfig[] = [
 	{
@@ -87,6 +86,8 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 	const { state } = useSidebar();
 	const isMobile = useIsMobile();
 	const isCollapsed = state === "collapsed";
+
+	const { user } = useUser();
 
 	return (
 		<Sidebar collapsible="icon">
@@ -182,39 +183,47 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 				</div>
 				{!isCollapsed && <SidebarSeparator />}
 				{/* User Profile */}
-				<div
-					className={`flex items-center ${
-						isCollapsed ? "gap-2" : isMobile ? "gap-2" : "gap-3"
-					} ${
-						isCollapsed ? "px-0" : isMobile ? "px-1" : "px-2"
-					} justify-center`}>
+				{user && (
 					<div
-						className={`flex ${
-							isMobile ? "h-8 w-8" : "h-10 w-10"
-						} items-center justify-center rounded-full bg-muted`}>
-						<User
-							className={`${
-								isMobile ? "h-4 w-4" : "h-5 w-5"
-							} text-muted-foreground`}
-						/>
-					</div>
-					{!isCollapsed && (
-						<div className="flex flex-col min-w-0">
-							<span
-								className={`${
-									isMobile ? "text-xs" : "text-sm"
-								} font-medium truncate`}>
-								Emilia Caitlin
-							</span>
-							<span
-								className={`${
-									isMobile ? "text-[10px]" : "text-xs"
-								} text-muted-foreground truncate`}>
-								hey@unspace.agency
-							</span>
+						className={`flex items-center ${
+							isCollapsed ? "gap-2" : isMobile ? "gap-2" : "gap-3"
+						} ${
+							isCollapsed ? "px-0" : isMobile ? "px-1" : "px-2"
+						} justify-center`}>
+						<div
+							className={`flex ${
+								isMobile ? "h-8 w-8" : "h-10 w-10"
+							} items-center justify-center rounded-full bg-muted`}>
+							{user?.user_metadata?.avatar_url ? (
+								<Image
+									src={user?.user_metadata?.avatar_url}
+									alt="User"
+									width={25}
+									height={25}
+									className="object-contain dark:invert rounded-full"
+								/>
+							) : (
+								<User className="h-4 w-4 text-muted-foreground" />
+							)}
 						</div>
-					)}
-				</div>
+						{!isCollapsed && (
+							<div className="flex flex-col min-w-0">
+								<span
+									className={`${
+										isMobile ? "text-xs" : "text-sm"
+									} font-medium truncate`}>
+									{user?.user_metadata?.name || "User"}
+								</span>
+								<span
+									className={`${
+										isMobile ? "text-[10px]" : "text-xs"
+									} text-muted-foreground truncate`}>
+									{user?.email || "user@example.com"}
+								</span>
+							</div>
+						)}
+					</div>
+				)}
 			</SidebarFooter>
 		</Sidebar>
 	);

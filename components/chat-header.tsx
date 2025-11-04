@@ -1,11 +1,37 @@
-import { Zap, HelpCircle, Gift, Bot } from "lucide-react";
+"use client";
+import { useState, useEffect } from "react";
+import { Zap, HelpCircle, Gift, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { useUser } from "@/hooks/use-user";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { createSupabaseClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 interface ChatHeaderProps {
 	title: string;
 }
 
 export function ChatHeader({ title }: ChatHeaderProps) {
+	const [isMounted, setIsMounted] = useState(false);
+	const { user } = useUser();
+	const supabase = createSupabaseClient();
+	const router = useRouter();
+
+	useEffect(() => {
+		setIsMounted(true);
+	}, []);
+
+	const handleLogout = async () => {
+		await supabase.auth.signOut();
+		router.push("/auth");
+	};
+
 	return (
 		<header className="px-6 py-4 flex items-center justify-between">
 			<h1 className="text-xl font-bold">{title}</h1>
@@ -35,14 +61,46 @@ export function ChatHeader({ title }: ChatHeaderProps) {
 					<Gift className="h-5 w-5" />
 				</Button>
 
-				{/* Bot icon with notification dot */}
-				<Button
-					variant="ghost"
-					size="icon"
-					className="rounded-full relative cursor-pointer">
-					<Bot className="h-5 w-5" />
-					<span className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-background" />
-				</Button>
+				{/* User avatar with dropdown */}
+				{isMounted ? (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<button className="ring-1 rounded-full cursor-pointer hover:opacity-80 transition-opacity">
+								{user?.user_metadata?.avatar_url ? (
+									<Image
+										src={user?.user_metadata?.avatar_url}
+										alt="User"
+										width={25}
+										height={25}
+										className="object-contain dark:invert rounded-full"
+									/>
+								) : (
+									<User className="h-4 w-4 text-muted-foreground" />
+								)}
+							</button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem onClick={handleLogout} variant="destructive">
+								<LogOut className="h-4 w-4" />
+								Logout
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				) : (
+					<button className="ring-1 rounded-full cursor-pointer hover:opacity-80 transition-opacity">
+						{user?.user_metadata?.avatar_url ? (
+							<Image
+								src={user?.user_metadata?.avatar_url}
+								alt="User"
+								width={25}
+								height={25}
+								className="object-contain dark:invert rounded-full"
+							/>
+						) : (
+							<User className="h-4 w-4 text-muted-foreground" />
+						)}
+					</button>
+				)}
 			</div>
 		</header>
 	);
