@@ -24,7 +24,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
 	const handleItemSelect = (label: string) => {
 		if (label === "AI Chat") {
-			router.push("/chat/new");
+			router.push("/chat");
 		} else {
 			const params = new URLSearchParams();
 			params.set("item", label);

@@ -32,7 +32,7 @@ export default function Auth() {
 
 	useEffect(() => {
 		if (user) {
-			router.push("/chat/new");
+			router.push("/chat");
 		}
 	}, [user, router]);
 
@@ -53,7 +53,7 @@ export default function Auth() {
 			if (error) {
 				setError(error.message);
 			} else {
-				router.push("/chat/new");
+				router.push("/chat");
 			}
 		},
 	});
@@ -115,7 +115,7 @@ export default function Auth() {
 			if (error) {
 				setError(error.message);
 			} else if (data.user) {
-				router.push("/chat/new");
+				router.push("/chat");
 			}
 		},
 	});

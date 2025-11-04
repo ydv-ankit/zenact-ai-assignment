@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +33,7 @@ export function SidebarProjectsComponent({
 	const [isDeleting, setIsDeleting] = useState(false);
 	const router = useRouter();
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
 
 	const fetchChats = useCallback(async () => {
 		try {
@@ -61,7 +62,7 @@ export function SidebarProjectsComponent({
 	}, [fetchChats]);
 
 	useEffect(() => {
-		if (isMounted && pathname?.startsWith("/chat/")) {
+		if (isMounted && pathname === "/chat") {
 			const timeoutId = setTimeout(() => {
 				fetchChats();
 			}, 500);
@@ -88,7 +89,8 @@ export function SidebarProjectsComponent({
 		try {
 			setIsDeleting(true);
 			const chatIds = Array.from(selectedItems);
-			const currentChatId = pathname?.split("/chat/")[1];
+			const currentChatId =
+				pathname === "/chat" ? searchParams.get("chat_id") : null;
 
 			const response = await fetch("/api/history", {
 				method: "DELETE",
@@ -112,7 +114,7 @@ export function SidebarProjectsComponent({
 				setSelectedItems(new Set());
 				await fetchChats();
 				if (currentChatId && chatIds.includes(currentChatId)) {
-					router.push("/chat/new");
+					router.push("/chat");
 				}
 			} else {
 				const errorMsg = data.error || "Failed to delete chats";
@@ -128,11 +130,11 @@ export function SidebarProjectsComponent({
 	};
 
 	const handleNewProject = () => {
-		router.push("/chat/new");
+		router.push("/chat");
 	};
 
 	const handleProjectClick = (projectId: string) => {
-		router.push(`/chat/${projectId}`);
+		router.push(`/chat?chat_id=${projectId}`);
 	};
 
 	return (
@@ -203,7 +205,8 @@ export function SidebarProjectsComponent({
 					<div className="space-y-2">
 						{projects.map((project) => {
 							const isSelected = selectedItems.has(project.id);
-							const currentChatId = pathname?.split("/chat/")[1];
+							const currentChatId =
+								pathname === "/chat" ? searchParams.get("chat_id") : null;
 							const isActive = currentChatId === project.id;
 							return (
 								<div
@@ -262,7 +265,7 @@ export function SidebarTemplatesComponent() {
 	};
 
 	const handlePromptClick = (prompt: string) => {
-		router.push(`/chat/new?prompt=${encodeURIComponent(prompt)}`);
+		router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
 	};
 
 	const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {

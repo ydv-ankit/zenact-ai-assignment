@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, use, useEffect, useRef } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/hooks/use-user";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,32 +12,15 @@ interface Message {
 	content: string;
 }
 
-interface ChatPageProps {
-	params:
-		| Promise<{
-				chat_id: string;
-		  }>
-		| {
-				chat_id: string;
-		  };
-}
-
-export default function ChatPage({ params }: ChatPageProps) {
+export default function ChatPage() {
 	const { user, loading } = useUser();
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const router = useRouter();
-	const previousPathnameRef = useRef<string | null>(null);
-	const pathname = usePathname();
-	const currentChatId = pathname?.split("/chat/")[1];
-	const previousChatId = previousPathnameRef.current?.split("/chat/")[1];
 	const searchParams = useSearchParams();
+	const chat_id = searchParams.get("chat_id") || "new";
 	const promptText = searchParams.get("prompt");
-
-	const { chat_id } = use(
-		params instanceof Promise ? params : Promise.resolve(params)
-	);
 
 	const fetchChatHistory = async () => {
 		if (!chat_id || chat_id === "new") return;
@@ -59,7 +42,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 	useEffect(() => {
 		fetchChatHistory();
 		setInput(promptText || "");
-	}, [chat_id]);
+	}, [chat_id, promptText]);
 
 	const handleSendMessage = async () => {
 		if (!input.trim() || isLoading) return;
@@ -97,7 +80,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 				setMessages(data.chat.messages || []);
 
 				if (chat_id === "new" && data.chat_id) {
-					router.replace(`/chat/${data.chat_id}`);
+					router.replace(`/chat?chat_id=${data.chat_id}`);
 				}
 			} else {
 				setMessages((prev) => prev.slice(0, -2));
@@ -124,15 +107,7 @@ export default function ChatPage({ params }: ChatPageProps) {
 	const characterCount = input.length;
 	const maxCharacters = 3000;
 
-	if (
-		loading &&
-		!(
-			previousChatId === "new" &&
-			currentChatId &&
-			currentChatId !== "new" &&
-			currentChatId !== previousChatId
-		)
-	) {
+	if (loading) {
 		return (
 			<div className="flex flex-1 overflow-hidden py-4 border-t border-l rounded-tl-3xl">
 				<div className="flex flex-col flex-1 min-h-0 overflow-hidden">

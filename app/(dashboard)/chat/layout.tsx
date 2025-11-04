@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { ChatHeader } from "@/components/chat-header";
 import { ChatHistorySidebar } from "@/components/chat-history-sidebar";
 import toast from "react-hot-toast";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -25,8 +25,9 @@ export default function ChatLayout({
 	const [projects, setProjects] = useState<ProjectItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const isMobile = useIsMobile();
-	const previousPathnameRef = useRef<string | null>(null);
+	const previousChatIdRef = useRef<string | null>(null);
 
 	const fetchChats = useCallback(async () => {
 		try {
@@ -49,19 +50,16 @@ export default function ChatLayout({
 		}
 	}, []);
 
-	// Initialize and fetch chats on mount only
 	useEffect(() => {
 		fetchChats();
 	}, [fetchChats]);
 
-	// Refetch when a new chat is created (transition from /chat/new to /chat/[actual_id])
 	useEffect(() => {
-		if (!pathname) return;
+		if (!pathname || pathname !== "/chat") return;
 
-		const currentChatId = pathname?.split("/chat/")[1];
-		const previousChatId = previousPathnameRef.current?.split("/chat/")[1];
+		const currentChatId = searchParams.get("chat_id") || "new";
+		const previousChatId = previousChatIdRef.current;
 
-		// If we transitioned from "new" to an actual chat_id, refetch the chat history
 		if (
 			previousChatId === "new" &&
 			currentChatId &&
@@ -71,8 +69,8 @@ export default function ChatLayout({
 			fetchChats();
 		}
 
-		previousPathnameRef.current = pathname;
-	}, [pathname, fetchChats]);
+		previousChatIdRef.current = currentChatId;
+	}, [pathname, searchParams, fetchChats]);
 
 	const handleProjectSelect = (projectId: string) => {
 		setSelectedProjectId(projectId);
@@ -91,7 +89,7 @@ export default function ChatLayout({
 				{!isMobile && (
 					<ChatHistorySidebar
 						selectedProjectId={
-							selectedProjectId || pathname?.split("/chat/")[1]
+							selectedProjectId || searchParams.get("chat_id") || undefined
 						}
 						onProjectSelect={handleProjectSelect}
 						projects={projects}

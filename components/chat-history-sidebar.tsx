@@ -88,7 +88,8 @@ export function ChatHistorySidebar({
 				setSelectedItems(new Set());
 				onRefresh();
 				if (wasSelectedChatDeleted) {
-					router.push("/chat/new");
+					router.push("/chat?chat_id=new");
+					window.location.reload();
 				}
 			} else {
 				const errorMsg = data.error || "Failed to delete chats";
@@ -104,12 +105,12 @@ export function ChatHistorySidebar({
 	};
 
 	const handleNewProject = () => {
-		router.push("/chat/new");
+		router.push("/chat?chat_id=new");
 	};
 
 	const handleProjectClick = (projectId: string) => {
 		onProjectSelect?.(projectId);
-		router.push(`/chat/${projectId}`);
+		router.push(`/chat?chat_id=${projectId}`);
 	};
 
 	return (
