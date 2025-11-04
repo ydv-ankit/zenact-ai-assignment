@@ -118,7 +118,9 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 						isCollapsed ? "px-0" : isMobile ? "px-1" : "px-2"
 					} ${isCollapsed ? "justify-center" : "justify-between"}`}>
 					{!isCollapsed && (
-						<div className="flex items-center justify-center gap-2">
+						<div
+							className="flex items-center justify-center gap-2 cursor-pointer"
+							onClick={() => router.push("/")}>
 							<Image
 								src={"/ai.png"}
 								width={isMobile ? 8 : 25}
@@ -248,7 +250,7 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 										)}
 									</div>
 									{!isCollapsed && (
-										<div className="flex flex-col min-w-0 ml-2 text-left">
+										<div className="flex flex-col w-[120px] ml-2 text-left">
 											<span
 												className={`${
 													isMobile ? "text-xs" : "text-sm"

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, use, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, use, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/hooks/use-user";
 import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +28,10 @@ export default function ChatPage({ params }: ChatPageProps) {
 	const [input, setInput] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const router = useRouter();
+	const previousPathnameRef = useRef<string | null>(null);
+	const pathname = usePathname();
+	const currentChatId = pathname?.split("/chat/")[1];
+	const previousChatId = previousPathnameRef.current?.split("/chat/")[1];
 
 	const { chat_id } = use(
 		params instanceof Promise ? params : Promise.resolve(params)
@@ -117,7 +121,15 @@ export default function ChatPage({ params }: ChatPageProps) {
 	const characterCount = input.length;
 	const maxCharacters = 3000;
 
-	if (loading) {
+	if (
+		loading &&
+		!(
+			previousChatId === "new" &&
+			currentChatId &&
+			currentChatId !== "new" &&
+			currentChatId !== previousChatId
+		)
+	) {
 		return (
 			<div className="flex flex-1 overflow-hidden py-4 border-t border-l rounded-tl-3xl">
 				<div className="flex flex-col flex-1 min-h-0 overflow-hidden">

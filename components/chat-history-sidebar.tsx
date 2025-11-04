@@ -66,7 +66,7 @@ export function ChatHistorySidebar({
 			const wasSelectedChatDeleted =
 				selectedProjectId && chatIds.includes(selectedProjectId);
 
-			const response = await fetch("/api/chats", {
+			const response = await fetch("/api/history", {
 				method: "DELETE",
 				headers: {
 					"Content-Type": "application/json",

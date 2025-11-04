@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { updateSession } from "./utils/supabase/middleware";
 
@@ -8,5 +7,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-	matcher: "/",
+	matcher: ["/", "/chat/:path*"],
 };

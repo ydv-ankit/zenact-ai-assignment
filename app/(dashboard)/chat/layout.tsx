@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ChatHeader } from "@/components/chat-header";
 import { ChatHistorySidebar } from "@/components/chat-history-sidebar";
 import toast from "react-hot-toast";
@@ -26,6 +26,7 @@ export default function ChatLayout({
 	const [isLoading, setIsLoading] = useState(true);
 	const pathname = usePathname();
 	const isMobile = useIsMobile();
+	const previousPathnameRef = useRef<string | null>(null);
 
 	const fetchChats = useCallback(async () => {
 		try {
@@ -52,6 +53,26 @@ export default function ChatLayout({
 	useEffect(() => {
 		fetchChats();
 	}, [fetchChats]);
+
+	// Refetch when a new chat is created (transition from /chat/new to /chat/[actual_id])
+	useEffect(() => {
+		if (!pathname) return;
+
+		const currentChatId = pathname?.split("/chat/")[1];
+		const previousChatId = previousPathnameRef.current?.split("/chat/")[1];
+
+		// If we transitioned from "new" to an actual chat_id, refetch the chat history
+		if (
+			previousChatId === "new" &&
+			currentChatId &&
+			currentChatId !== "new" &&
+			currentChatId !== previousChatId
+		) {
+			fetchChats();
+		}
+
+		previousPathnameRef.current = pathname;
+	}, [pathname, fetchChats]);
 
 	const handleProjectSelect = (projectId: string) => {
 		setSelectedProjectId(projectId);

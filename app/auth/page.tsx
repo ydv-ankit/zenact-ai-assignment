@@ -30,12 +30,9 @@ export default function Auth() {
 	const [error, setError] = useState<string | null>(null);
 	console.log("user", user);
 
-	// OAuth callback is handled automatically by Supabase SSR middleware
-	// The code parameter will be exchanged for a session server-side
-
 	useEffect(() => {
 		if (user) {
-			router.push("/");
+			router.push("/chat/new");
 		}
 	}, [user, router]);
 
@@ -56,12 +53,11 @@ export default function Auth() {
 			if (error) {
 				setError(error.message);
 			} else {
-				router.push("/");
+				router.push("/chat/new");
 			}
 		},
 	});
 
-	// Register Form
 	const registerForm = useForm({
 		defaultValues: {
 			name: "",
@@ -74,7 +70,6 @@ export default function Auth() {
 
 			let profilePictureUrl: string | null = null;
 
-			// Upload profile picture if provided
 			if (value.profile) {
 				try {
 					const fileExt = value.profile.name.split(".").pop();
@@ -120,7 +115,7 @@ export default function Auth() {
 			if (error) {
 				setError(error.message);
 			} else if (data.user) {
-				router.push("/");
+				router.push("/chat/new");
 			}
 		},
 	});
@@ -131,7 +126,7 @@ export default function Auth() {
 		const { error } = await supabase.auth.signInWithOAuth({
 			provider: "google",
 			options: {
-				redirectTo: `${window.location.origin}/auth`,
+				redirectTo: `${window.location.origin}`,
 			},
 		});
 
