@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,7 +89,6 @@ export function ChatHistorySidebar({
 				onRefresh();
 				if (wasSelectedChatDeleted) {
 					router.push("/chat?chat_id=new");
-					window.location.reload();
 				}
 			} else {
 				const errorMsg = data.error || "Failed to delete chats";
@@ -106,6 +105,7 @@ export function ChatHistorySidebar({
 
 	const handleNewProject = () => {
 		router.push("/chat?chat_id=new");
+		router.refresh();
 	};
 
 	const handleProjectClick = (projectId: string) => {

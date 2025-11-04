@@ -8,7 +8,6 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import clsx from "clsx";
 import { LucideIcon } from "lucide-react";
 
 export interface SidebarMenuItemConfig {

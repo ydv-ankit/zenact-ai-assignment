@@ -19,14 +19,18 @@ export default function ChatPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const chat_id = searchParams.get("chat_id") || "new";
-	const promptText = searchParams.get("prompt");
+	const [chatId, setChatId] = useState<string>("new");
 
-	const fetchChatHistory = async () => {
-		if (!chat_id || chat_id === "new") return;
+	const fetchChatHistory = async (chatId: string) => {
+		if (!chatId || chatId === "new") {
+			setMessages([]);
+			setInput("");
+			setIsLoading(false);
+			return;
+		}
 
 		try {
-			const response = await fetch(`/api/chat?chat_id=${chat_id}`);
+			const response = await fetch(`/api/chat?chat_id=${chatId}`);
 			const data = await response.json();
 			if (data.messages) {
 				setMessages(data.messages);
@@ -40,14 +44,17 @@ export default function ChatPage() {
 	};
 
 	useEffect(() => {
-		fetchChatHistory();
-		setInput(promptText || "");
-	}, [chat_id, promptText]);
+		const currentChatId = searchParams.get("chat_id") || "new";
+		const currentPromptText = searchParams.get("prompt");
+		setChatId(currentChatId);
+		fetchChatHistory(currentChatId);
+		setInput(currentPromptText || "");
+	}, [searchParams]);
 
 	const handleSendMessage = async () => {
 		if (!input.trim() || isLoading) return;
 
-		const currentChatId = chat_id === "new" ? crypto.randomUUID() : chat_id;
+		const currentChatId = chatId === "new" ? crypto.randomUUID() : chatId;
 
 		const userMessage: Message = {
 			role: "user",
@@ -79,7 +86,7 @@ export default function ChatPage() {
 			if (response.ok && data.chat) {
 				setMessages(data.chat.messages || []);
 
-				if (chat_id === "new" && data.chat_id) {
+				if (chatId === "new" && data.chat_id) {
 					router.replace(`/chat?chat_id=${data.chat_id}`);
 				}
 			} else {
@@ -146,7 +153,7 @@ export default function ChatPage() {
 
 	return (
 		<ChatContent
-			chat_id={chat_id}
+			chat_id={chatId}
 			messages={messages}
 			input={input}
 			setInput={setInput}

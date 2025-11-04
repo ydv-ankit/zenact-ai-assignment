@@ -51,8 +51,10 @@ export default function ChatLayout({
 	}, []);
 
 	useEffect(() => {
+		const currentChatId = searchParams.get("chat_id") || "new";
+		setSelectedProjectId(currentChatId);
 		fetchChats();
-	}, [fetchChats]);
+	}, [fetchChats, searchParams]);
 
 	useEffect(() => {
 		if (!pathname || pathname !== "/chat") return;

@@ -13,6 +13,7 @@ import {
 import { createSupabaseClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import toast from "react-hot-toast";
 
 interface ChatHeaderProps {
 	title: string;
@@ -41,7 +42,10 @@ export function ChatHeader({ title }: ChatHeaderProps) {
 				<Button
 					variant="default"
 					size="sm"
-					className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black rounded-lg gap-1.5 cursor-pointer">
+					className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black rounded-lg gap-1.5 cursor-pointer"
+					onClick={() => {
+						toast.success("Coming soon!");
+					}}>
 					<Zap className="h-4 w-4 text-yellow-400 fill-yellow-400" />
 					Upgrade
 				</Button>
@@ -50,7 +54,10 @@ export function ChatHeader({ title }: ChatHeaderProps) {
 				<Button
 					variant="ghost"
 					size="icon"
-					className="rounded-full cursor-pointer">
+					className="rounded-full cursor-pointer"
+					onClick={() => {
+						toast.success("Coming soon!");
+					}}>
 					<HelpCircle className="h-5 w-5" />
 				</Button>
 
@@ -58,7 +65,10 @@ export function ChatHeader({ title }: ChatHeaderProps) {
 				<Button
 					variant="ghost"
 					size="icon"
-					className="rounded-full cursor-pointer">
+					className="rounded-full cursor-pointer"
+					onClick={() => {
+						toast.success("Coming soon!");
+					}}>
 					<Gift className="h-5 w-5" />
 				</Button>
 

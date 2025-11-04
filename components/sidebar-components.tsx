@@ -265,7 +265,7 @@ export function SidebarTemplatesComponent() {
 	};
 
 	const handlePromptClick = (prompt: string) => {
-		router.push(`/chat?prompt=${encodeURIComponent(prompt)}`);
+		router.push(`/chat?chat_id=new&prompt=${encodeURIComponent(prompt)}`);
 	};
 
 	const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
