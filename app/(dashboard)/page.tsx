@@ -43,7 +43,7 @@ function HomeContent() {
 		setSelectedItem(item || "Projects");
 	}, [searchParams]);
 
-	if (!isMobile || (isMobile && state !== "collapsed")) return null;
+	if (isMobile && state !== "collapsed") return null;
 
 	if (loading) {
 		return (

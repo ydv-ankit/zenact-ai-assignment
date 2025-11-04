@@ -241,7 +241,7 @@ export function AppSidebar({ selectedItem, onItemSelect }: AppSidebarProps) {
 												alt="User"
 												width={25}
 												height={25}
-												className="w-8 h-8 object-contain dark:invert rounded-full"
+												className="w-8 h-8 object-contain rounded-full"
 											/>
 										) : (
 											<User className="h-4 w-4 text-muted-foreground" />
