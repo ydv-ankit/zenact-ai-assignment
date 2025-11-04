@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import toast from "react-hot-toast";
+import { useDeleteChats } from "@/hooks/use-chat-queries";
 
 interface ProjectItem {
 	id: string;
@@ -37,8 +37,9 @@ export function ChatHistorySidebar({
 }: ChatHistorySidebarProps) {
 	const [isMounted, setIsMounted] = useState(false);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-	const [isDeleting, setIsDeleting] = useState(false);
 	const router = useRouter();
+	const deleteChatsMutation = useDeleteChats();
+	const isDeleting = deleteChatsMutation.isPending;
 
 	useEffect(() => {
 		setIsMounted(true);
@@ -60,52 +61,24 @@ export function ChatHistorySidebar({
 	const handleDeleteSelected = async () => {
 		if (selectedItems.size === 0) return;
 
+		const chatIds = Array.from(selectedItems);
+		const wasSelectedChatDeleted =
+			selectedProjectId && chatIds.includes(selectedProjectId);
+
 		try {
-			setIsDeleting(true);
-			const chatIds = Array.from(selectedItems);
-			const wasSelectedChatDeleted =
-				selectedProjectId && chatIds.includes(selectedProjectId);
-
-			const response = await fetch("/api/history", {
-				method: "DELETE",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ chatIds }),
-			});
-
-			const data = await response.json();
-
-			if (response.ok && data.success) {
-				const deletedCount = data.deletedCount || selectedItems.size;
-				if (deletedCount > 0) {
-					toast.success(`Deleted ${deletedCount} chat(s)`);
-				} else {
-					toast.error(
-						"No chats were deleted. They may have already been deleted."
-					);
-				}
-				setSelectedItems(new Set());
-				onRefresh();
-				if (wasSelectedChatDeleted) {
-					router.push("/chat?chat_id=new");
-				}
-			} else {
-				const errorMsg = data.error || "Failed to delete chats";
-				toast.error(errorMsg);
-				console.error("Delete error:", data);
+			await deleteChatsMutation.mutateAsync(chatIds);
+			setSelectedItems(new Set());
+			onRefresh(); // Refresh the list after deletion
+			if (wasSelectedChatDeleted) {
+				router.push("/chat?chat_id=new");
 			}
 		} catch (error) {
-			console.error("Error deleting chats:", error);
-			toast.error("Failed to delete chats. Please try again.");
-		} finally {
-			setIsDeleting(false);
+			// Error toast is handled in the mutation's onError
 		}
 	};
 
 	const handleNewProject = () => {
 		router.push("/chat?chat_id=new");
-		router.refresh();
 	};
 
 	const handleProjectClick = (projectId: string) => {

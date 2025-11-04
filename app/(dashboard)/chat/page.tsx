@@ -1,106 +1,75 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/hooks/use-user";
-import toast from "react-hot-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatContent } from "@/components/chat-content";
-
-interface Message {
-	role: "user" | "assistant";
-	content: string;
-}
+import {
+	useChat,
+	useSendMessage,
+	type Message,
+} from "@/hooks/use-chat-queries";
 
 export default function ChatPage() {
 	const { user, loading } = useUser();
-	const [messages, setMessages] = useState<Message[]>([]);
-	const [input, setInput] = useState("");
-	const [isLoading, setIsLoading] = useState(false);
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [chatId, setChatId] = useState<string>("new");
+	const [input, setInput] = useState("");
+	const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
 
-	const fetchChatHistory = async (chatId: string) => {
-		if (!chatId || chatId === "new") {
-			setMessages([]);
-			setInput("");
-			setIsLoading(false);
-			return;
-		}
+	// Fetch chat data
+	const { data: chatData, isLoading: isLoadingChat } = useChat(chatId);
+	const sendMessageMutation = useSendMessage();
 
-		try {
-			const response = await fetch(`/api/chat?chat_id=${chatId}`);
-			const data = await response.json();
-			if (data.messages) {
-				setMessages(data.messages);
-			} else if (data.error) {
-				toast.error(`Failed to load chat history`);
-			}
-		} catch (error) {
-			console.error("Error fetching chat history:", error);
-			toast.error("Failed to load chat history. Please try again.");
-		}
-	};
+	const messages =
+		optimisticMessages.length > 0
+			? optimisticMessages
+			: chatData?.messages || [];
+
+	const isLoading = sendMessageMutation.isPending || isLoadingChat;
 
 	useEffect(() => {
 		const currentChatId = searchParams.get("chat_id") || "new";
 		const currentPromptText = searchParams.get("prompt");
 		setChatId(currentChatId);
-		fetchChatHistory(currentChatId);
 		setInput(currentPromptText || "");
+		setOptimisticMessages([]);
 	}, [searchParams]);
 
 	const handleSendMessage = async () => {
 		if (!input.trim() || isLoading) return;
 
 		const currentChatId = chatId === "new" ? crypto.randomUUID() : chatId;
+		const promptText = input.trim();
 
 		const userMessage: Message = {
 			role: "user",
-			content: input.trim(),
+			content: promptText,
 		};
 
 		const thinkingMessage: Message = {
 			role: "assistant",
 			content: "",
 		};
-		setMessages((prev) => [...prev, userMessage, thinkingMessage]);
+
+		setOptimisticMessages([...messages, userMessage, thinkingMessage]);
 		setInput("");
-		setIsLoading(true);
 
 		try {
-			const response = await fetch("/api/chat", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					chat_id: currentChatId,
-					prompt: input.trim(),
-				}),
+			const data = await sendMessageMutation.mutateAsync({
+				chatId: currentChatId,
+				prompt: promptText,
 			});
 
-			const data = await response.json();
+			setOptimisticMessages([]);
 
-			if (response.ok && data.chat) {
-				setMessages(data.chat.messages || []);
-
-				if (chatId === "new" && data.chat_id) {
-					router.replace(`/chat?chat_id=${data.chat_id}`);
-				}
-			} else {
-				setMessages((prev) => prev.slice(0, -2));
-				const errorMessage = data.error || "Failed to send message";
-				toast.error(errorMessage);
-				console.error("Error sending message:", data.error);
+			if (data.chat_id && (chatId === "new" || data.chat_id !== chatId)) {
+				router.replace(`/chat?chat_id=${data.chat_id}`);
 			}
 		} catch (error) {
-			setMessages((prev) => prev.slice(0, -2));
-			toast.error("Error sending message! Please try again.");
-			console.error("Error sending message:", error);
-		} finally {
-			setIsLoading(false);
+			setOptimisticMessages([]);
 		}
 	};
 
@@ -110,6 +79,13 @@ export default function ChatPage() {
 			handleSendMessage();
 		}
 	};
+
+	// Handle error state from mutation
+	useEffect(() => {
+		if (sendMessageMutation.isError && optimisticMessages.length > 0) {
+			setOptimisticMessages([]);
+		}
+	}, [sendMessageMutation.isError, optimisticMessages.length]);
 
 	const characterCount = input.length;
 	const maxCharacters = 3000;

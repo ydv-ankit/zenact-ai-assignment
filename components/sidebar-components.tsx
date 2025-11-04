@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import toast from "react-hot-toast";
-
-interface ProjectItem {
-	id: string;
-	title: string;
-	description: string;
-}
+import { useChatHistory, useDeleteChats } from "@/hooks/use-chat-queries";
 
 export function SidebarProjectsComponent({
 	title = "Projects",
@@ -28,47 +23,15 @@ export function SidebarProjectsComponent({
 }) {
 	const [isMounted, setIsMounted] = useState(false);
 	const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-	const [projects, setProjects] = useState<ProjectItem[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [isDeleting, setIsDeleting] = useState(false);
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
-	const fetchChats = useCallback(async () => {
-		try {
-			setIsLoading(true);
-			const response = await fetch("/api/history");
-			const data = await response.json();
+	// Use React Query hooks
+	const { data: projects = [], isLoading, refetch } = useChatHistory();
+	const deleteChatsMutation = useDeleteChats();
 
-			if (response.ok && data.chats) {
-				setProjects(data.chats);
-			} else if (data.error) {
-				toast.error("Failed to load chat history");
-				setProjects([]);
-			}
-		} catch (error) {
-			console.error("Error fetching chats:", error);
-			toast.error("Failed to load chat history. Please try again.");
-			setProjects([]);
-		} finally {
-			setIsLoading(false);
-		}
-	}, []);
-
-	useEffect(() => {
-		setIsMounted(true);
-		fetchChats();
-	}, [fetchChats]);
-
-	useEffect(() => {
-		if (isMounted && pathname === "/chat") {
-			const timeoutId = setTimeout(() => {
-				fetchChats();
-			}, 500);
-			return () => clearTimeout(timeoutId);
-		}
-	}, [pathname, isMounted, fetchChats]);
+	const isDeleting = deleteChatsMutation.isPending;
 
 	const toggleSelection = (projectId: string, e: React.MouseEvent) => {
 		e.stopPropagation();
@@ -86,46 +49,20 @@ export function SidebarProjectsComponent({
 	const handleDeleteSelected = async () => {
 		if (selectedItems.size === 0) return;
 
+		const chatIds = Array.from(selectedItems);
+		const currentChatId =
+			pathname === "/chat" ? searchParams.get("chat_id") : null;
+
 		try {
-			setIsDeleting(true);
-			const chatIds = Array.from(selectedItems);
-			const currentChatId =
-				pathname === "/chat" ? searchParams.get("chat_id") : null;
+			await deleteChatsMutation.mutateAsync(chatIds);
+			setSelectedItems(new Set());
 
-			const response = await fetch("/api/history", {
-				method: "DELETE",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ chatIds }),
-			});
-
-			const data = await response.json();
-
-			if (response.ok && data.success) {
-				const deletedCount = data.deletedCount || selectedItems.size;
-				if (deletedCount > 0) {
-					toast.success(`Deleted ${deletedCount} chat(s)`);
-				} else {
-					toast.error(
-						"No chats were deleted. They may have already been deleted."
-					);
-				}
-				setSelectedItems(new Set());
-				await fetchChats();
-				if (currentChatId && chatIds.includes(currentChatId)) {
-					router.push("/chat");
-				}
-			} else {
-				const errorMsg = data.error || "Failed to delete chats";
-				toast.error(errorMsg);
-				console.error("Delete error:", data);
+			// If current chat was deleted, redirect to new chat
+			if (currentChatId && chatIds.includes(currentChatId)) {
+				router.push("/chat");
 			}
 		} catch (error) {
-			console.error("Error deleting chats:", error);
-			toast.error("Failed to delete chats. Please try again.");
-		} finally {
-			setIsDeleting(false);
+			// Error toast is handled in the mutation's onError
 		}
 	};
 
@@ -160,7 +97,7 @@ export function SidebarProjectsComponent({
 								<DropdownMenuItem onClick={handleNewProject}>
 									New Project
 								</DropdownMenuItem>
-								<DropdownMenuItem onClick={fetchChats}>
+								<DropdownMenuItem onClick={() => refetch()}>
 									Refresh
 								</DropdownMenuItem>
 								<DropdownMenuItem
