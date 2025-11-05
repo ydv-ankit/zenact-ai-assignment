@@ -5,11 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@/hooks/use-user";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChatContent } from "@/components/chat-content";
-import {
-	useChat,
-	useSendMessage,
-	type Message,
-} from "@/hooks/use-chat-queries";
+import { useChat, useSendMessage } from "@/hooks/use-chat-queries";
 
 export default function ChatPage() {
 	const { user, loading } = useUser();
@@ -17,14 +13,11 @@ export default function ChatPage() {
 	const searchParams = useSearchParams();
 	const [chatId, setChatId] = useState<string>("new");
 	const [input, setInput] = useState("");
-	const [chatMessages, setChatMessages] = useState<Message[]>([]);
 
 	const { data: chatData, isLoading: isLoadingChat } = useChat(chatId);
 	const sendMessageMutation = useSendMessage();
 
-	const messages =
-		chatMessages.length > 0 ? chatMessages : chatData?.messages || [];
-
+	const messages = chatData?.messages || [];
 	const isLoading = sendMessageMutation.isPending || isLoadingChat;
 
 	useEffect(() => {
@@ -32,7 +25,6 @@ export default function ChatPage() {
 		const currentPromptText = searchParams.get("prompt");
 		setChatId(currentChatId);
 		setInput(input + (currentPromptText || ""));
-		setChatMessages([]);
 	}, [searchParams]);
 
 	const handleSendMessage = async () => {
@@ -41,17 +33,6 @@ export default function ChatPage() {
 		const currentChatId = chatId === "new" ? crypto.randomUUID() : chatId;
 		const promptText = input.trim();
 
-		const userMessage: Message = {
-			role: "user",
-			content: promptText,
-		};
-
-		const thinkingMessage: Message = {
-			role: "assistant",
-			content: "",
-		};
-
-		setChatMessages([...messages, userMessage, thinkingMessage]);
 		setInput("");
 
 		try {
@@ -60,13 +41,11 @@ export default function ChatPage() {
 				prompt: promptText,
 			});
 
-			setChatMessages([]);
-
 			if (data.chat_id && (chatId === "new" || data.chat_id !== chatId)) {
 				router.replace(`/chat?chat_id=${data.chat_id}`);
 			}
 		} catch (error) {
-			setChatMessages([]);
+			console.error(error);
 		}
 	};
 
@@ -76,12 +55,6 @@ export default function ChatPage() {
 			handleSendMessage();
 		}
 	};
-
-	useEffect(() => {
-		if (sendMessageMutation.isError && chatMessages.length > 0) {
-			setChatMessages([]);
-		}
-	}, [sendMessageMutation.isError, chatMessages.length]);
 
 	const characterCount = input.length;
 	const maxCharacters = 3000;

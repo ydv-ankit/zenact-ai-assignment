@@ -99,11 +99,51 @@ export function useSendMessage() {
 
 			return data;
 		},
-		onSuccess: (data, variables) => {
-			const finalChatId = data.chat_id || variables.chatId;
-			queryClient.invalidateQueries({
-				queryKey: chatKeys.detail(finalChatId),
+		onMutate: async ({ chatId, prompt }) => {
+			await queryClient.cancelQueries({
+				queryKey: chatKeys.detail(chatId),
 			});
+
+			const previousChat = queryClient.getQueryData<Chat>(
+				chatKeys.detail(chatId)
+			);
+
+			const userMessage: Message = {
+				role: "user",
+				content: prompt,
+			};
+
+			const thinkingMessage: Message = {
+				role: "assistant",
+				content: "",
+			};
+
+			const messages = [
+				...(previousChat?.messages || []),
+				userMessage,
+				thinkingMessage,
+			];
+
+			queryClient.setQueryData<Chat>(chatKeys.detail(chatId), {
+				chat_id: chatId,
+				messages,
+			});
+
+			return { previousChat, chatId };
+		},
+		onSuccess: (data, variables, context) => {
+			const finalChatId = data.chat_id || variables.chatId;
+
+			if (data.chat?.messages) {
+				queryClient.setQueryData<Chat>(chatKeys.detail(finalChatId), {
+					chat_id: finalChatId,
+					messages: data.chat.messages,
+				});
+			} else {
+				queryClient.invalidateQueries({
+					queryKey: chatKeys.detail(finalChatId),
+				});
+			}
 
 			if (variables.chatId === "new" || data.chat_id !== variables.chatId) {
 				queryClient.invalidateQueries({
@@ -111,7 +151,13 @@ export function useSendMessage() {
 				});
 			}
 		},
-		onError: (error: Error) => {
+		onError: (error: Error, variables, context) => {
+			if (context?.previousChat && context.chatId) {
+				queryClient.setQueryData<Chat>(
+					chatKeys.detail(context.chatId),
+					context.previousChat
+				);
+			}
 			toast.error(error.message || "Failed to send message");
 		},
 	});
